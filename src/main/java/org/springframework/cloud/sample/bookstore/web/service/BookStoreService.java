@@ -71,8 +71,13 @@ public class BookStoreService {
 
 	public Book removeBookFromStore(String storeId, String bookId) {
 		BookStore store = getBookStore(storeId);
-		return store.remove(bookId)
-				.orElseThrow(() -> new IllegalArgumentException("Invalid book ID " + storeId + ":" + bookId + "."));
+
+		// 删除未做持久化，此处添加
+		Book book = store.remove(bookId)
+			.orElseThrow(() -> new IllegalArgumentException("Invalid book ID " + storeId + ":" + bookId + "."));
+		repository.save(store);
+
+		return book;
 	}
 
 	private String generateRandomId() {
