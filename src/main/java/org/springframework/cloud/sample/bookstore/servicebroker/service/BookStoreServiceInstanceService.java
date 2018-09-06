@@ -20,6 +20,7 @@ import org.springframework.cloud.sample.bookstore.servicebroker.model.ServiceIns
 import org.springframework.cloud.sample.bookstore.servicebroker.repository.ServiceInstanceRepository;
 import org.springframework.cloud.sample.bookstore.web.service.BookStoreService;
 import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException;
+import org.springframework.cloud.servicebroker.exception.ServiceInstanceExistsException;
 import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceResponse;
 import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceResponse.CreateServiceInstanceResponseBuilder;
@@ -30,6 +31,7 @@ import org.springframework.cloud.servicebroker.model.instance.GetServiceInstance
 import org.springframework.cloud.servicebroker.service.ServiceInstanceService;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -44,12 +46,15 @@ public class BookStoreServiceInstanceService implements ServiceInstanceService {
 
 	@Override
 	public CreateServiceInstanceResponse createServiceInstance(CreateServiceInstanceRequest request) {
+
 		String instanceId = request.getServiceInstanceId();
 
 		CreateServiceInstanceResponseBuilder responseBuilder = CreateServiceInstanceResponse.builder();
 
 		if (instanceRepository.existsById(instanceId)) {
-			responseBuilder.instanceExisted(true);
+			// responseBuilder.instanceExisted(true);
+			// 据文档中描述，可抛出实例已存在的异常，效果一致
+			throw new ServiceInstanceExistsException(instanceId, request.getServiceDefinitionId());
 		} else {
 			storeService.createBookStore(instanceId);
 
