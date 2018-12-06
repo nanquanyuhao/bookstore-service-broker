@@ -16,31 +16,58 @@
 
 package org.springframework.cloud.sample.bookstore.servicebroker.model;
 
-import net.sf.json.JSONObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.persistence.AttributeConverter;
-import java.util.Map;
+import java.io.IOException;
 
 public class ObjectToStringConverter implements AttributeConverter<Object, String> {
-	@Override
-	public String convertToDatabaseColumn(Object attribute) {
 
-		JSONObject json = null;
-		if (attribute instanceof Map){
-			json = JSONObject.fromObject(attribute);
-			return json.toString();
+	/**
+	 * 中括号
+	 */
+	private static final String PARENTHESES_LEFT = "[";
+	private static final String PARENTHESES_RIGHT = "]";
+
+	/**
+	 * 大括号
+	 */
+	private static final String BRACES_LEFT = "{";
+	private static final String BRACES_RIGHT = "}";
+
+	@Override
+	public String convertToDatabaseColumn(Object o) {
+
+		String json = "";
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			json = mapper.writeValueAsString(o);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
 		}
-		return attribute.toString();
+
+		return json.toString();
 	}
 
 	@Override
-	public Object convertToEntityAttribute(String dbData) {
+	public Object convertToEntityAttribute(String s) {
 
-		if (dbData.startsWith("{")) {
-			JSONObject json = JSONObject.fromObject(dbData);
-			return json;
+		boolean arrayString = s.startsWith(PARENTHESES_LEFT) && s.endsWith(PARENTHESES_RIGHT);
+		boolean objectString = s.startsWith(BRACES_LEFT) && s.endsWith(BRACES_RIGHT);
+
+		if (!arrayString && !objectString) {
+			return s;
 		}
 
-		return dbData;
+		ObjectMapper mapper = new ObjectMapper();
+		Object obj = null;
+		try {
+			obj = mapper.readValue(s, Object.class);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return obj;
 	}
 }
